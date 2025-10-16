@@ -1,0 +1,26 @@
+{
+  "name": "tienda-nube-payment-form-monorepo",
+  "version": "1.0.0",
+  "description": "Formulario de pago para Tienda Nube con React + Nimbus",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix api && npm install --prefix web --legacy-peer-deps",
+    "dev:api": "npm start --prefix api",
+    "dev:web": "npm run dev --prefix web",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "build": "npm run build --prefix web",
+    "test": "npm run test --prefix web"
+  },
+  "keywords": [
+    "tiendanube",
+    "payment",
+    "form",
+    "react",
+    "nimbus"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
