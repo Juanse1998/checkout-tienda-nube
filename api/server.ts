@@ -1,6 +1,7 @@
 import jsonServer from 'json-server';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import type { Request, Response, NextFunction } from 'express';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -11,7 +12,8 @@ const middlewares = jsonServer.defaults({
   static: join(__dirname, 'public')
 });
 
-server.use((req, res, next) => {
+// CORS middleware
+server.use((req: Request, res: Response, next: NextFunction) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
@@ -27,7 +29,8 @@ server.use((req, res, next) => {
 server.use(middlewares);
 server.use(jsonServer.bodyParser);
 
-server.use((req, res, next) => {
+// Token validation middleware
+server.use((req: Request, res: Response, next: NextFunction) => {
   if (req.method === 'POST') {
     req.body.createdAt = new Date().toISOString();
     
@@ -61,7 +64,8 @@ server.use((req, res, next) => {
   next();
 });
 
-server.post('/payments', (req, res, next) => {
+// Payment logging endpoint
+server.post('/payments', (req: Request, res: Response, next: NextFunction) => {
   console.log('Registro de pago:', {
     status: req.body.status,
     timestamp: req.body.timestamp,

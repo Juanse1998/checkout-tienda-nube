@@ -2,7 +2,12 @@ import { Box, Card, Title, Text, Button } from '@nimbus-ds/components';
 import Lottie from 'lottie-react';
 import errorAnimation from '../assets/error.json';
 
-const PaymentRejected = ({ errorMessage, onRetry }) => {
+interface PaymentRejectedProps {
+  errorMessage: string;
+  onRetry: () => void;
+}
+
+const PaymentRejected = ({ errorMessage, onRetry }: PaymentRejectedProps) => {
   return (
     <Box 
       display="flex" 
@@ -24,7 +29,7 @@ const PaymentRejected = ({ errorMessage, onRetry }) => {
 
               <Box textAlign="center" display="flex" flexDirection="column" alignItems="center" gap="2">
                 <Title as="h2" color="danger-textHigh">Pago rechazado</Title>
-                <Text appearance="subdued">
+                <Text color="neutral-textLow">
                   {errorMessage || 'Tu transacción no pudo ser procesada'}
                 </Text>
               </Box>
@@ -43,16 +48,16 @@ const PaymentRejected = ({ errorMessage, onRetry }) => {
                 </Text>
                 
                 <Box display="flex" flexDirection="column" gap="2">
-                  <Text fontSize="small">
+                  <Text fontSize="caption">
                     • Verifica que los datos de tu tarjeta sean correctos
                   </Text>
-                  <Text fontSize="small">
+                  <Text fontSize="caption">
                     • Asegúrate de tener fondos suficientes
                   </Text>
-                  <Text fontSize="small">
+                  <Text fontSize="caption">
                     • Intenta con otra tarjeta
                   </Text>
-                  <Text fontSize="small">
+                  <Text fontSize="caption">
                     • Contacta a tu banco si el problema persiste
                   </Text>
                 </Box>

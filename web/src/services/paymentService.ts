@@ -1,14 +1,20 @@
+import type { FormData, TokenResponse, PaymentData } from '../types/payment.types';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-
-export const tokenizeCard = async (cardData) => {
-  const { cardNumber, expiryDate, cvv, cardholderName, dni } = cardData;
+export const tokenizeCard = async (cardData: FormData): Promise<TokenResponse> => {
+  const { cardNumber, expiryDate, cardholderName, dni } = cardData;
   const last4 = cardNumber.replace(/\s/g, '').slice(-4);
   const brand = detectBrand(cardNumber);
+  
+  // Simular delay de red
   await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  // Simular error aleatorio (10% de probabilidad)
   if (Math.random() < 0.1) {
     throw new Error('Error de conexión con el procesador de pagos');
   }
+  
   const token = `tok_${generateRandomToken()}`;
   
   const tokenResponse = await fetch(`${API_URL}/tokens`, {
@@ -29,8 +35,9 @@ export const tokenizeCard = async (cardData) => {
     throw new Error(errorData.error || 'Error al guardar el token');
   }
   
-  const tokenData = await tokenResponse.json();
+  const tokenData: TokenResponse = await tokenResponse.json();
   
+  // Registrar el pago
   await fetch(`${API_URL}/payments`, {
     method: 'POST',
     headers: {
@@ -56,7 +63,7 @@ export const tokenizeCard = async (cardData) => {
   return tokenData;
 };
 
-const detectBrand = (cardNumber) => {
+const detectBrand = (cardNumber: string): string => {
   const digits = cardNumber.replace(/\s/g, '');
   
   if (/^4/.test(digits)) return 'visa';
@@ -67,12 +74,12 @@ const detectBrand = (cardNumber) => {
   return 'unknown';
 };
 
-const generateRandomToken = () => {
+const generateRandomToken = (): string => {
   return Math.random().toString(36).substring(2, 15) + 
          Math.random().toString(36).substring(2, 15);
 };
 
-export const logPaymentError = async (errorData) => {
+export const logPaymentError = async (errorData: Partial<PaymentData>): Promise<void> => {
   try {
     await fetch(`${API_URL}/payments`, {
       method: 'POST',

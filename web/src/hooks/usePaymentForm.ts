@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import {
   validateLuhn,
   validateExpiryDate,
@@ -11,33 +11,55 @@ import {
   detectCardBrand,
 } from '../utils/validators';
 import { tokenizeCard, logPaymentError } from '../services/paymentService';
+import type { FormData, FormErrors, FormTouched, FormState, TokenResponse } from '../types/payment.types';
 
 const FORM_STATES = {
-  IDLE: 'idle',
-  VALIDATING: 'validating',
-  PROCESSING: 'processing',
-  SUCCESS: 'success',
-  ERROR: 'error',
-  REJECTED: 'rejected',
+  IDLE: 'idle' as const,
+  VALIDATING: 'validating' as const,
+  PROCESSING: 'processing' as const,
+  SUCCESS: 'success' as const,
+  ERROR: 'error' as const,
+  REJECTED: 'rejected' as const,
 };
 
-export const usePaymentForm = () => {
-  const [formState, setFormState] = useState(FORM_STATES.IDLE);
-  const [formData, setFormData] = useState({
+type FieldName = keyof FormData;
+
+interface UsePaymentFormReturn {
+  formState: FormState;
+  formData: FormData;
+  errors: FormErrors;
+  touched: FormTouched;
+  errorMessage: string;
+  successData: TokenResponse | null;
+  cardBrand: string;
+  handleInputChange: (field: FieldName, value: string) => void;
+  handleBlur: (field: FieldName) => void;
+  handleSubmit: (e: FormEvent<HTMLFormElement>) => Promise<void>;
+  resetForm: () => void;
+  clearError: () => void;
+  isProcessing: boolean;
+  isSuccess: boolean;
+  isError: boolean;
+  isRejected: boolean;
+}
+
+export const usePaymentForm = (): UsePaymentFormReturn => {
+  const [formState, setFormState] = useState<FormState>(FORM_STATES.IDLE);
+  const [formData, setFormData] = useState<FormData>({
     cardNumber: '',
     expiryDate: '',
     cvv: '',
     cardholderName: '',
     dni: '',
   });
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successData, setSuccessData] = useState(null);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<FormTouched>({});
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [successData, setSuccessData] = useState<TokenResponse | null>(null);
 
   const cardBrand = detectCardBrand(formData.cardNumber);
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: FieldName, value: string): void => {
     let formattedValue = value;
 
     if (field === 'cardNumber') {
@@ -60,13 +82,13 @@ export const usePaymentForm = () => {
     }
   };
 
-  const handleBlur = (field) => {
+  const handleBlur = (field: FieldName): void => {
     setTouched(prev => ({ ...prev, [field]: true }));
     validateField(field, formData[field]);
   };
 
-  const validateField = (field, value) => {
-    let error = null;
+  const validateField = (field: FieldName, value: string): boolean => {
+    let error: string | null = null;
 
     switch (field) {
       case 'cardNumber':
@@ -84,8 +106,8 @@ export const usePaymentForm = () => {
           error = 'Fecha de vencimiento requerida';
         } else {
           const validation = validateExpiryDate(value);
-          if (!validation.valid) {
-            error = validation.message;
+          if (!validation.isValid) {
+            error = validation.error || 'Fecha inválida';
           }
         }
         break;
@@ -95,8 +117,8 @@ export const usePaymentForm = () => {
           error = 'CVV requerido';
         } else {
           const validation = validateCVV(value, cardBrand);
-          if (!validation.valid) {
-            error = validation.message;
+          if (!validation.isValid) {
+            error = validation.error || 'CVV inválido';
           }
         }
         break;
@@ -106,8 +128,8 @@ export const usePaymentForm = () => {
           error = 'Nombre del titular requerido';
         } else {
           const validation = validateCardholderName(value);
-          if (!validation.valid) {
-            error = validation.message;
+          if (!validation.isValid) {
+            error = validation.error || 'Nombre inválido';
           }
         }
         break;
@@ -117,8 +139,8 @@ export const usePaymentForm = () => {
           error = 'DNI requerido';
         } else {
           const validation = validateDNI(value);
-          if (!validation.valid) {
-            error = validation.message;
+          if (!validation.isValid) {
+            error = validation.error || 'DNI inválido';
           }
         }
         break;
@@ -127,12 +149,12 @@ export const usePaymentForm = () => {
         break;
     }
 
-    setErrors(prev => ({ ...prev, [field]: error }));
+    setErrors(prev => ({ ...prev, [field]: error || undefined }));
     return error === null;
   };
 
-  const validateAllFields = () => {
-    const fields = ['cardNumber', 'expiryDate', 'cvv', 'cardholderName', 'dni'];
+  const validateAllFields = (): boolean => {
+    const fields: FieldName[] = ['cardNumber', 'expiryDate', 'cvv', 'cardholderName', 'dni'];
     let isValid = true;
 
     fields.forEach(field => {
@@ -142,13 +164,13 @@ export const usePaymentForm = () => {
       }
     });
 
-    const allTouched = fields.reduce((acc, field) => ({ ...acc, [field]: true }), {});
+    const allTouched = fields.reduce((acc, field) => ({ ...acc, [field]: true }), {} as FormTouched);
     setTouched(allTouched);
 
     return isValid;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
 
     setFormState(FORM_STATES.VALIDATING);
@@ -172,11 +194,12 @@ export const usePaymentForm = () => {
       await logPaymentError({
         cardholderName: formData.cardholderName,
         dni: formData.dni,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Error desconocido',
       });
 
-      const isRejected = error.message.toLowerCase().includes('rechazado') || 
-                        error.message.toLowerCase().includes('rejected');
+      const errorMsg = error instanceof Error ? error.message : 'Error al procesar el pago';
+      const isRejected = errorMsg.toLowerCase().includes('rechazado') || 
+                        errorMsg.toLowerCase().includes('rejected');
       
       if (isRejected) {
         setFormState(FORM_STATES.REJECTED);
@@ -184,11 +207,11 @@ export const usePaymentForm = () => {
         setFormState(FORM_STATES.ERROR);
       }
       
-      setErrorMessage(error.message || 'Error al procesar el pago');
+      setErrorMessage(errorMsg);
     }
   };
 
-  const resetForm = () => {
+  const resetForm = (): void => {
     setFormState(FORM_STATES.IDLE);
     setFormData({
       cardNumber: '',
@@ -203,7 +226,7 @@ export const usePaymentForm = () => {
     setSuccessData(null);
   };
 
-  const clearError = () => {
+  const clearError = (): void => {
     setFormState(FORM_STATES.IDLE);
     setErrorMessage('');
   };

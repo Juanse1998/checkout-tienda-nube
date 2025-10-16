@@ -1,7 +1,12 @@
 import { Box, Alert, Icon } from '@nimbus-ds/components';
 import { ExclamationCircleIcon } from '@nimbus-ds/icons';
 
-const PaymentError = ({ errorMessage, onClose }) => {
+interface PaymentErrorProps {
+  errorMessage: string;
+  onClose: () => void;
+}
+
+const PaymentError = ({ errorMessage, onClose }: PaymentErrorProps) => {
   return (
     <Box marginBottom="4">
       <Alert appearance="danger" onRemove={onClose}>

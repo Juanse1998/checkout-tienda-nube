@@ -12,7 +12,7 @@ const PaymentFormHeader = () => {
       textAlign="center"
     >
       <Title as="h1">Formulario de Pago</Title>
-      <Text appearance="subdued">
+      <Text color="neutral-textLow">
         Ingresa los datos de tu tarjeta de forma segura
       </Text>
     </Box>

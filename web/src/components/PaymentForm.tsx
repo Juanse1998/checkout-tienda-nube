@@ -9,7 +9,6 @@ import SecurityNotice from './SecurityNotice';
 
 const PaymentForm = () => {
   const {
-    formState,
     formData,
     errors,
     touched,

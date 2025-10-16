@@ -1,7 +1,9 @@
+import type { ValidationResult } from '../types/payment.types';
+
 /**
  * Validación de número de tarjeta usando algoritmo de Luhn
  */
-export const validateLuhn = (cardNumber) => {
+export const validateLuhn = (cardNumber: string): boolean => {
   const digits = cardNumber.replace(/\s/g, '');
   
   if (!/^\d+$/.test(digits)) {
@@ -31,7 +33,7 @@ export const validateLuhn = (cardNumber) => {
 /**
  * Detecta la marca de la tarjeta basándose en el número
  */
-export const detectCardBrand = (cardNumber) => {
+export const detectCardBrand = (cardNumber: string): string => {
   const digits = cardNumber.replace(/\s/g, '');
   
   if (/^4/.test(digits)) return 'visa';
@@ -45,18 +47,18 @@ export const detectCardBrand = (cardNumber) => {
 /**
  * Valida fecha de vencimiento (MM/YY)
  */
-export const validateExpiryDate = (expiry) => {
+export const validateExpiryDate = (expiry: string): ValidationResult => {
   const match = expiry.match(/^(\d{2})\/(\d{2})$/);
   
   if (!match) {
-    return { valid: false, message: 'Formato inválido. Use MM/YY' };
+    return { isValid: false, error: 'Formato inválido. Use MM/YY' };
   }
 
   const month = parseInt(match[1], 10);
   const year = parseInt(match[2], 10);
 
   if (month < 1 || month > 12) {
-    return { valid: false, message: 'Mes inválido' };
+    return { isValid: false, error: 'Mes inválido' };
   }
 
   const now = new Date();
@@ -64,63 +66,63 @@ export const validateExpiryDate = (expiry) => {
   const currentMonth = now.getMonth() + 1;
 
   if (year < currentYear || (year === currentYear && month < currentMonth)) {
-    return { valid: false, message: 'Tarjeta vencida' };
+    return { isValid: false, error: 'Tarjeta vencida' };
   }
 
-  return { valid: true };
+  return { isValid: true };
 };
 
 /**
  * Valida CVV según la marca de tarjeta
  */
-export const validateCVV = (cvv, brand) => {
+export const validateCVV = (cvv: string, brand: string): ValidationResult => {
   const cvvLength = brand === 'amex' ? 4 : 3;
   
   if (!/^\d+$/.test(cvv)) {
-    return { valid: false, message: 'Solo números' };
+    return { isValid: false, error: 'Solo números' };
   }
 
   if (cvv.length !== cvvLength) {
-    return { valid: false, message: `Debe tener ${cvvLength} dígitos` };
+    return { isValid: false, error: `Debe tener ${cvvLength} dígitos` };
   }
 
-  return { valid: true };
+  return { isValid: true };
 };
 
 /**
  * Valida DNI argentino (7-8 dígitos)
  */
-export const validateDNI = (dni) => {
+export const validateDNI = (dni: string): ValidationResult => {
   const digits = dni.replace(/\./g, '');
   
   if (!/^\d{7,8}$/.test(digits)) {
-    return { valid: false, message: 'DNI debe tener 7-8 dígitos' };
+    return { isValid: false, error: 'DNI debe tener 7-8 dígitos' };
   }
 
-  return { valid: true };
+  return { isValid: true };
 };
 
 /**
  * Valida nombre del titular
  */
-export const validateCardholderName = (name) => {
+export const validateCardholderName = (name: string): ValidationResult => {
   const trimmed = name.trim();
   
   if (trimmed.length < 3) {
-    return { valid: false, message: 'Nombre muy corto' };
+    return { isValid: false, error: 'Nombre muy corto' };
   }
 
   if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(trimmed)) {
-    return { valid: false, message: 'Solo letras y espacios' };
+    return { isValid: false, error: 'Solo letras y espacios' };
   }
 
-  return { valid: true };
+  return { isValid: true };
 };
 
 /**
  * Formatea número de tarjeta con espacios cada 4 dígitos
  */
-export const formatCardNumber = (value) => {
+export const formatCardNumber = (value: string): string => {
   const digits = value.replace(/\s/g, '');
   const groups = digits.match(/.{1,4}/g);
   return groups ? groups.join(' ') : digits;
@@ -129,7 +131,7 @@ export const formatCardNumber = (value) => {
 /**
  * Formatea fecha de vencimiento (MM/YY)
  */
-export const formatExpiryDate = (value) => {
+export const formatExpiryDate = (value: string): string => {
   const digits = value.replace(/\D/g, '');
   if (digits.length >= 2) {
     return `${digits.slice(0, 2)}/${digits.slice(2, 4)}`;
@@ -140,7 +142,7 @@ export const formatExpiryDate = (value) => {
 /**
  * Formatea DNI con puntos
  */
-export const formatDNI = (value) => {
+export const formatDNI = (value: string): string => {
   const digits = value.replace(/\D/g, '');
   if (digits.length <= 6) return digits;
   if (digits.length <= 7) return `${digits.slice(0, -3)}.${digits.slice(-3)}`;

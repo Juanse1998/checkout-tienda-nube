@@ -1,8 +1,14 @@
 import { Box, Card, Title, Text, Chip, Button } from '@nimbus-ds/components';
 import Lottie from 'lottie-react';
 import successAnimation from '../assets/success.json';
+import type { TokenResponse } from '../types/payment.types';
 
-const PaymentSuccess = ({ successData, onBack }) => {
+interface PaymentSuccessProps {
+  successData: TokenResponse | null;
+  onBack: () => void;
+}
+
+const PaymentSuccess = ({ successData, onBack }: PaymentSuccessProps) => {
   return (
     <Box 
       display="flex" 
@@ -55,7 +61,7 @@ const PaymentSuccess = ({ successData, onBack }) => {
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Text fontWeight="medium">Fecha:</Text>
                   <Text fontSize="small">
-                    {new Date(successData?.createdAt).toLocaleString('es-AR')}
+                    {successData?.createdAt && new Date(successData.createdAt).toLocaleString('es-AR')}
                   </Text>
                 </Box>
               </Box>
